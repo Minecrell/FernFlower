@@ -3,6 +3,9 @@ sudo: false
 language: java
 jdk: openjdk6
 
+install: true
+script: ./gradlew assemble
+
 notifications:
   email: false
 
