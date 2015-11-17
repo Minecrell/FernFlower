@@ -81,6 +81,15 @@ jar.manifest {
     attributes "Main-Class" : "org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler"
 }
 
+task sourceJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives sourceJar
+}
+
 uploadArchives {
     repositories {
         add getProject().repositories.mavenLocal()
