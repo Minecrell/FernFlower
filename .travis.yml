@@ -1,0 +1,15 @@
+sudo: false
+
+language: java
+jdk: openjdk6
+
+notifications:
+  email: false
+
+env:
+  global:
+    - LAPIS_DEPLOY=https://github.com/LapisBlue/Deploy.git DEPLOY_ROOT=/tmp/lapis/deploy
+    - GIT_REPO=git@github.com:Minecrell/Repo.git
+    - secure: "KHOQU2sNu7+FoVVQ0kXUFBkjZohLgLDgezzlL0nSQ2TsGFItmEWs10hITPUHPC2QeqhXguN/DOqSecJtMdAs2l12otLbyo4osssBS+/GSTfRp8wH8RGTVmqqRaxF/TqvZ/LzZQYOOT0vqvwYFWrbRSClPv/u7eY8stMHLxE9gY2nLKa9OEtml/rGmYVRuxCt5PP7PxrWyRluGqIPK0JcYoU8ei3HdNmmbxsSkkqYGRhyQDkL8DRgB7I5kq9o6rhBCul7i+P9hZq5rOreRkSD08bQ74dJoyygykq4Aq25VQk9qjHOEJo21aTD2DW4vvSYVldBx7DJGY1aepvdgNQEHqmuk/a3yjxRXcZWXs8Dng7pWUAsjqRDlkhQ78GIfxHi9WxtemQ84zKWFrw1Dt+o3ylkRO9xDQ+zgeA0/mr0cYS6WimROcUX7YdLnQbQdGzlFP2AmRA4G4b231uqDrdO/ANBdlxjnHxKpim+cX7KwyiwM6gKo2UHG41K7wMZquCAnjHIINm3giKDD19TX5SkvB+9zNAMiR4VmqvLohBNuijDclyyUv9SyBsgeiu8aubmH6n/PCVZtiK/OA4j9q2dIU9yUDJEV7d95uo0uUD0skRlRFVJLZH0GOlPkL5YPwFM9EHqWdrp7/X+aMK1zdAEeK65BWRKCe12riVXV8g8DQU="
+
+after_success: git clone $LAPIS_DEPLOY $DEPLOY_ROOT && $DEPLOY_ROOT/maven_repo "gradle uploadArchives"
