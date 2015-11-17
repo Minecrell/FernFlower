@@ -4,7 +4,7 @@ apply plugin: 'maven'
 apply plugin: 'java'
 
 version = "2.0-SNAPSHOT"
-group = "net.minecraftforge" //not sure if we shoulkd publish under this name, but it's our fork so meh
+group = "net.minecrell" //not sure if we shoulkd publish under this name, but it's our fork so meh
 archivesBaseName = "fernflower"
 
 sourceCompatibility = '1.6'
@@ -93,6 +93,9 @@ uploadArchives {
             repository(url: project.filesmaven.url) {
                 authentication(userName: project.filesmaven.username, privateKey: project.filesmaven.key)
             }
+        } else if (System.env.REPO_SNAPSHOTS && System.env.REPO_RELEASES) {
+            logger.info('Publishing to minecrell repo')
+            repository(url: 'file://localhost/' + System.getenv('REPO_' + (version.endsWith('-SNAPSHOT') ? 'SNAPSHOTS' : 'RELEASES')))
         } else {
             logger.info('Publishing to repo folder')
             repository(url: 'file://localhost/' + project.file('repo').getAbsolutePath())
