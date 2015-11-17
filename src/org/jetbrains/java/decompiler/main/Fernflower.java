@@ -50,6 +50,10 @@ public class Fernflower implements IDecompiledData {
   }
 
   public void decompileContext() {
+    decompileContext(true);
+  }
+
+  public void decompileContext(boolean decompileAll) {
     if (DecompilerContext.getOption(IFernflowerPreferences.RENAME_ENTITIES)) {
       new IdentifierConverter().rename(structContext);
     }
@@ -59,7 +63,9 @@ public class Fernflower implements IDecompiledData {
     DecompilerContext.setClassProcessor(classesProcessor);
     DecompilerContext.setStructContext(structContext);
 
-    structContext.saveContext();
+    if (decompileAll) {
+      structContext.saveContext();
+    }
   }
 
   public void clearContext() {
