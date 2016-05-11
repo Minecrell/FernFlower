@@ -59,6 +59,12 @@ publishing {
 
             artifact sourceJar
             artifact javadocJar
+
+            repositories {
+                maven {
+                    url = System.getenv('REPO_' + (version.endsWith('-SNAPSHOT') ? 'SNAPSHOTS' : 'RELEASES')) ?: "$buildDir/repo"
+                }
+            }
         }
     }
 }
