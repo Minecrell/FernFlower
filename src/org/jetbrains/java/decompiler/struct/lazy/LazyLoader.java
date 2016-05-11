@@ -15,40 +15,18 @@
  */
 package org.jetbrains.java.decompiler.struct.lazy;
 
-import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
+import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 public class LazyLoader {
 
-  private final Map<String, Link> mapClassLinks = new HashMap<String, Link>();
-  private final IBytecodeProvider provider;
-
-  public LazyLoader(IBytecodeProvider provider) {
-    this.provider = provider;
-  }
-
-  public void addClassLink(String classname, Link link) {
-    mapClassLinks.put(classname, link);
-  }
-
-  public void removeClassLink(String classname) {
-    mapClassLinks.remove(classname);
-  }
-
-  public Link getClassLink(String classname) {
-    return mapClassLinks.get(classname);
-  }
-
-  public ConstantPool loadPool(String classname) {
-    try {
-      DataInputFullStream in = getClassStream(classname);
+  public static ConstantPool loadPool(StructClass structClass) {
+    try (DataInputFullStream in = getClassStream(structClass)) {
       if (in == null) return null;
 
       try {
@@ -56,7 +34,7 @@ public class LazyLoader {
         return new ConstantPool(in);
       }
       finally {
-        in.close();
+        //in.close();
       }
     }
     catch (IOException ex) {
@@ -64,11 +42,11 @@ public class LazyLoader {
     }
   }
 
-  public byte[] loadBytecode(StructMethod mt, int codeFullLength) {
-    String className = mt.getClassStruct().qualifiedName;
+  public static byte[] loadBytecode(StructMethod mt, int codeFullLength) throws IOException {
+    final StructClass structClass = mt.getClassStruct();
+    String className = structClass.qualifiedName;
 
-    try {
-      DataInputFullStream in = getClassStream(className);
+    try (DataInputFullStream in = getClassStream(structClass)) {
       if (in == null) return null;
 
       try {
@@ -127,7 +105,7 @@ public class LazyLoader {
         }
       }
       finally {
-        in.close();
+        //in.close();
       }
 
       return null;
@@ -137,14 +115,9 @@ public class LazyLoader {
     }
   }
 
-  public DataInputFullStream getClassStream(String externalPath, String internalPath) throws IOException {
-    byte[] bytes = provider.getBytecode(externalPath, internalPath);
-    return new DataInputFullStream(bytes);
-  }
-
-  public DataInputFullStream getClassStream(String qualifiedClassName) throws IOException {
-    Link link = mapClassLinks.get(qualifiedClassName);
-    return link == null ? null : getClassStream(link.externalPath, link.internalPath);
+  private static DataInputFullStream getClassStream(StructClass structClass) throws IOException {
+    byte[] bytes = structClass.context.readClass(structClass);
+    return bytes != null ? new DataInputFullStream(bytes) : null;
   }
 
   public static void skipAttributes(DataInputFullStream in) throws IOException {
@@ -155,19 +128,4 @@ public class LazyLoader {
     }
   }
 
-
-  public static class Link {
-    public static final int CLASS = 1;
-    public static final int ENTRY = 2;
-
-    public final int type;
-    public final String externalPath;
-    public final String internalPath;
-
-    public Link(int type, String externalPath, String internalPath) {
-      this.type = type;
-      this.externalPath = externalPath;
-      this.internalPath = internalPath;
-    }
-  }
 }

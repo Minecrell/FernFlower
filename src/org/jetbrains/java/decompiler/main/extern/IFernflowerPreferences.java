@@ -60,7 +60,7 @@ public interface IFernflowerPreferences {
   String LINE_SEPARATOR_WIN = "\r\n";
   String LINE_SEPARATOR_LIN = "\n";
 
-  String INCLUDE_ENTIRE_CLASSPATH = "iec";
+  //String INCLUDE_ENTIRE_CLASSPATH = "iec";
 
   String USE_JAD_VARNAMING = "jvn";
 
@@ -97,7 +97,7 @@ public interface IFernflowerPreferences {
     put(BANNER, "");
     put(UNIT_TEST_MODE, "0");
     put(DUMP_ORIGINAL_LINES, "0");
-    put(INCLUDE_ENTIRE_CLASSPATH, "0");
+    //put(INCLUDE_ENTIRE_CLASSPATH, "0");
     put(USE_JAD_VARNAMING, "0");
   }});
 }

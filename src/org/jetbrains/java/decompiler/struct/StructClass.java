@@ -55,11 +55,13 @@ import java.util.Map;
 */
 public class StructClass extends StructMember {
 
+  public final StructContext context;
+  public final String source;
+
   public final String qualifiedName;
   public final PrimitiveConstant superClass;
 
   private final boolean own;
-  private final LazyLoader loader;
   private final int minorVersion;
   private final int majorVersion;
   private final int[] interfaces;
@@ -71,13 +73,14 @@ public class StructClass extends StructMember {
 
   private ConstantPool pool;
 
-  public StructClass(byte[] bytes, boolean own, LazyLoader loader) throws IOException {
-    this(new DataInputFullStream(bytes), own, loader);
+  public StructClass(byte[] bytes, boolean own, StructContext context, String source) throws IOException {
+    this(new DataInputFullStream(bytes), own, context, source);
   }
 
-  public StructClass(DataInputFullStream in, boolean own, LazyLoader loader) throws IOException {
+  public StructClass(DataInputFullStream in, boolean own, StructContext context, String source) throws IOException {
+    this.context = context;
+    this.source = source;
     this.own = own;
-    this.loader = loader;
 
     in.discard(4);
 
@@ -144,14 +147,12 @@ public class StructClass extends StructMember {
   }
 
   public void releaseResources() {
-    if (loader != null) {
-      pool = null;
-    }
+    pool = null;
   }
 
   public ConstantPool getPool() {
-    if (pool == null && loader != null) {
-      pool = loader.loadPool(qualifiedName);
+    if (pool == null) {
+      pool = LazyLoader.loadPool(this);
     }
     return pool;
   }
@@ -174,10 +175,6 @@ public class StructClass extends StructMember {
 
   public boolean isOwn() {
     return own;
-  }
-
-  public LazyLoader getLoader() {
-    return loader;
   }
 
   public boolean isVersionGE_1_5() {

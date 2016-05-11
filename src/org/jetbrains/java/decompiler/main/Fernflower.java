@@ -17,36 +17,26 @@ package org.jetbrains.java.decompiler.main;
 
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
-import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
-import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger.Severity;
-import org.jetbrains.java.decompiler.main.extern.IResultSaver;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.modules.renamer.IdentifierConverter;
 import org.jetbrains.java.decompiler.struct.IDecompiledData;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructContext;
-import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
-import org.jetbrains.java.decompiler.util.JADNameProvider;
 
-import java.io.File;
-import java.util.HashSet;
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.Map;
-import java.util.Set;
 
-public class Fernflower implements IDecompiledData {
+public class Fernflower implements IDecompiledData, Closeable {
 
   private final StructContext structContext;
   private ClassesProcessor classesProcessor;
 
-  public Fernflower(IBytecodeProvider provider, IResultSaver saver, Map<String, Object> options, IFernflowerLogger logger) {
-    structContext = new StructContext(saver, this, new LazyLoader(provider));
+  public Fernflower(StructContext context, Map<String, Object> options, IFernflowerLogger logger) {
+    this.structContext = context;
     DecompilerContext.initContext(options,logger);
     DecompilerContext.setCounterContainer(new CounterContainer());
-
-    if (DecompilerContext.getOption(IFernflowerPreferences.INCLUDE_ENTIRE_CLASSPATH)) {
-      addAllClasspath();
-    }
   }
 
   public void decompileContext() {
@@ -58,11 +48,9 @@ public class Fernflower implements IDecompiledData {
 
     DecompilerContext.setClassProcessor(classesProcessor);
     DecompilerContext.setStructContext(structContext);
-
-    structContext.saveContext();
   }
 
-  public void clearContext() {
+  private void clearContext() {
     DecompilerContext.setCurrentContext(null);
   }
 
@@ -101,25 +89,10 @@ public class Fernflower implements IDecompiledData {
     }
   }
 
-  private void addAllClasspath() {
-    Set<String> found = new HashSet<String>();
-    String[] props = { System.getProperty("java.class.path"), System.getProperty("sun.boot.class.path") };
-    for (String prop : props) {
-      if (prop == null)
-        continue;
-
-      for (final String path : prop.split(File.pathSeparator)) {
-        File file = new File(path);
-        if (found.contains(file.getAbsolutePath()))
-          continue;
-
-        // only add .class files from classpath
-        if (file.exists() && (file.getName().endsWith(".class") || file.getName().endsWith(".jar"))) {
-          DecompilerContext.getLogger().writeMessage("Adding File to context from classpath: " + file, Severity.INFO);
-          structContext.addSpace(file, false);
-          found.add(file.getAbsolutePath());
-        }
-      }
-    }
+  @Override
+  public void close() throws IOException {
+    clearContext();
+    this.structContext.close();
   }
+
 }

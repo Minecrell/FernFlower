@@ -15,7 +15,12 @@
  */
 package org.jetbrains.java.decompiler;
 
-import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import org.jetbrains.java.decompiler.main.Fernflower;
+import org.jetbrains.java.decompiler.struct.FileStructContext;
+import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.junit.After;
 import org.junit.Before;
@@ -28,9 +33,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 public abstract class SingleClassesTestBase {
   protected DecompilerTestFixture fixture;
 
@@ -41,7 +43,7 @@ public abstract class SingleClassesTestBase {
   }
 
   @After
-  public void tearDown() {
+  public void tearDown() throws IOException {
     fixture.tearDown();
     fixture = null;
   }
@@ -56,16 +58,23 @@ public abstract class SingleClassesTestBase {
       assertTrue(classFile.isFile());
       String testName = classFile.getName().substring(0, classFile.getName().length() - 6);
 
-      ConsoleDecompiler decompiler = fixture.getDecompiler();
+      Fernflower decompiler = this.fixture.getDecompiler();
+      FileStructContext context = this.fixture.getContext();
 
-      for (File file : collectClasses(classFile)) decompiler.addSpace(file, true);
+      for (File file : collectClasses(classFile)) context.scan(file.toPath(), true);
       decompiler.decompileContext();
 
-      File decompiledFile = new File(fixture.getTargetDir(), testName + ".java");
-      assertTrue(decompiledFile.isFile());
+      StructClass structClass = context.getClass(testFile);
+      if (structClass == null) {
+        structClass = context.getClass(testName);
+        if (structClass == null) {
+          structClass = context.getClasses().values().stream().filter(struct -> !struct.qualifiedName.contains("$")).findFirst().get();
+        }
+      }
+
       File referenceFile = new File(fixture.getTestDataDir(), "results/" + testName + ".dec");
       assertTrue(referenceFile.isFile());
-      compareContent(decompiledFile, referenceFile);
+      compareContent(decompiler.getClassContent(structClass), referenceFile);
     }
     catch (Exception e) {
       throw new RuntimeException(e);
@@ -91,9 +100,7 @@ public abstract class SingleClassesTestBase {
     return files;
   }
 
-  private static void compareContent(File decompiledFile, File referenceFile) throws IOException {
-    String decompiledContent = new String(InterpreterUtil.getBytes(decompiledFile), "UTF-8");
-
+  private static void compareContent(String decompiledContent, File referenceFile) throws IOException {
     String referenceContent = new String(InterpreterUtil.getBytes(referenceFile), "UTF-8");
     if (InterpreterUtil.IS_WINDOWS && !referenceContent.contains("\r\n")) {
       referenceContent = referenceContent.replace("\n", "\r\n");  // fix for broken Git checkout on Windows

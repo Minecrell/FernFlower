@@ -15,8 +15,10 @@
  */
 package org.jetbrains.java.decompiler;
 
-import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
+import org.jetbrains.java.decompiler.main.Fernflower;
+import org.jetbrains.java.decompiler.main.decompiler.PrintStreamLogger;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+import org.jetbrains.java.decompiler.struct.FileStructContext;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,9 +30,8 @@ import static org.junit.Assert.assertTrue;
 
 public class DecompilerTestFixture {
   private File testDataDir;
-  private File tempDir;
-  private File targetDir;
-  private ConsoleDecompiler decompiler;
+  private Fernflower decompiler;
+  private FileStructContext context;
   public boolean cleanup = true;
 
   public void setUp() throws IOException {
@@ -45,13 +46,8 @@ public class DecompilerTestFixture {
     if (!isTestDataDir(testDataDir)) testDataDir = new File("../plugins/java-decompiler/engine/testData");
     assertTrue("current dir: " + new File("").getAbsolutePath(), isTestDataDir(testDataDir));
 
-    //noinspection SSBasedInspection
-    tempDir = File.createTempFile("decompiler_test_", "_dir");
-    assertTrue(tempDir.delete());
-
-    targetDir = new File(tempDir, "decompiled");
-    assertTrue(targetDir.mkdirs());
-    decompiler = new ConsoleDecompiler(this.targetDir, new HashMap<String, Object>() {{
+    this.context = new FileStructContext();
+    decompiler = new Fernflower(this.context, new HashMap<String, Object>() {{
       put(IFernflowerPreferences.LOG_LEVEL, "warn");
       put(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES, "1");
       put(IFernflowerPreferences.REMOVE_SYNTHETIC, "1");
@@ -59,29 +55,23 @@ public class DecompilerTestFixture {
       put(IFernflowerPreferences.LITERALS_AS_IS, "1");
       put(IFernflowerPreferences.UNIT_TEST_MODE, "1");
       putAll(options);
-    }});
+    }}, new PrintStreamLogger(System.err));
   }
 
-  public void tearDown() {
-    if (tempDir != null && cleanup) {
-      delete(tempDir);
-    }
+  public void tearDown() throws IOException {
+    this.decompiler.close();
   }
 
   public File getTestDataDir() {
     return testDataDir;
   }
 
-  public File getTempDir() {
-    return tempDir;
-  }
-
-  public File getTargetDir() {
-    return targetDir;
-  }
-
-  public ConsoleDecompiler getDecompiler() {
+  public Fernflower getDecompiler() {
     return decompiler;
+  }
+
+  public FileStructContext getContext() {
+    return this.context;
   }
 
   private static boolean isTestDataDir(File dir) {

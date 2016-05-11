@@ -24,6 +24,7 @@ import org.jetbrains.java.decompiler.struct.attr.StructGenericSignatureAttribute
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.struct.gen.generics.GenericMain;
 import org.jetbrains.java.decompiler.struct.gen.generics.GenericMethodDescriptor;
+import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
@@ -118,7 +119,7 @@ public class StructMethod extends StructMember {
 
   public void expandData() throws IOException {
     if (containsCode && !expanded) {
-      byte[] code = classStruct.getLoader().loadBytecode(this, codeFullLength);
+      byte[] code = LazyLoader.loadBytecode(this, codeFullLength);
       seq = parseBytecode(new DataInputFullStream(code), codeLength, classStruct.getPool());
       loadRenamer();
       expanded = true;
